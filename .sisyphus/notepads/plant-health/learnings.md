@@ -211,3 +211,75 @@
 - Shadcn UI initialization (`npx shadcn@latest init -d`) handles Tailwind v4 perfectly, adding the base variables inside `@theme inline` dynamically without breaking existing `--color-*` rules added prior to init.
 - Shadcn UI requires `compilerOptions.baseUrl` and `compilerOptions.paths` in `tsconfig.json`, otherwise it will fail to validate aliases, even though modern Vite uses `tsconfig.app.json`.
 - React 19 imported by Vite 6 does not need `import React from 'react'` in TSX, keeping it causes TS6133 warning/error.
+
+## [2026-03-11] Task 8: Diagnosis, Care Advisor, and Web Research Agents
+- Added , , and  as  agents under .
+- Reused existing prompt helpers from ; no prompt duplication.
+-  is fixed at 3 and query slicing enforces that cap.
+- Web synthesis appends  only when search results exist.
+- QA evidence captured in  and .
+
+## [2026-03-11] Task 8: Diagnosis, Care Advisor, and Web Research Agents
+- Added PlantDiagnosisNode, CareAdvisorNode, and WebResearchNode as AsyncNode agents under backend/src/agents/.
+- Reused existing prompt helpers from src/utils/prompts.py with no prompt duplication.
+- WebResearchNode.MAX_SEARCHES is fixed at 3 and query slicing enforces that cap.
+- Web synthesis appends web_insights only when search results exist.
+- QA evidence captured in .sisyphus/evidence/task-8-diagnosis.txt and .sisyphus/evidence/task-8-search-limit.txt.
+
+- Task 9: Added AsyncFlow wiring in backend/src/agents/flow.py for SensorAnalysis -> Diagnosis -> CareAdvisor -> WebResearch with explicit anomaly/critical/research/done transitions.
+- Task 9: Analysis API uses /api/analyze, /api/analysis/latest, and /api/analysis/history; enforces MIN_READINGS_FOR_ANALYSIS and persists only final merged analysis.
+- Task 9: Verified QA with temporary DATABASE_PATH instances; evidence files captured for normal analysis, insufficient_data 400 response, and latest analysis retrieval.
+
+## Task 12: Seed Data Script
+
+**Status:** ✓ COMPLETED
+
+**Key Learnings:**
+- `seed.py` uses async DB functions from `src.db` module - no direct sqlite3 imports
+- Realistic sensor patterns: temperature sine curve (18-28°C), humidity inverse to temp, light 6am-6pm
+- Soil moisture pattern: gradual evaporation with watering spike at noon (realistic for plant care)
+- 1440 readings (1 per minute for 24h) stored as UTC timestamps
+- `update_plant_config()` updates singleton plant_config table row
+
+**Implementation Pattern:**
+- Path insertion for src imports: `sys.path.insert(0, os.path.dirname(__file__))`
+- All DB operations await async functions
+- Math module for realistic sine curves: `math.sin(math.pi * (hour - offset) / period)`
+- Random Gaussian noise adds realistic variation: `random.gauss(mean, std_dev)`
+
+**Verification:**
+- Output confirmed: "Inserted 1440 readings ... Monstera deliciosa"
+- Database has exactly 1440 sensor readings
+- 3 analysis results with proper JSON serialization for lists
+
+
+### Task 11: Dashboard Layout
+- **Recharts Tooltip Customization**: To correctly format different data types (e.g., lux vs °C vs %) and use normalized data for the chart while showing raw data in the tooltip, a `CustomTooltip` component is very effective.
+- **Lucide Icons**: When importing icon components to pass as props, `import type { LucideIcon }` should be used in Vite to avoid TS/bundler errors about missing exports.
+- **Framer Motion**: Wrapped the `Card` component with `motion.div` to provide entrance animations.
+- **ResponsiveContainer**: Mandatory wrapper for Recharts `<AreaChart>` to ensure it renders with a width > 0.
+- **Data Mappings**: To ensure left-to-right chronological order on `AreaChart`, reversing the array from the backend is needed if the backend provides data in descending order.
+
+## [2026-03-11] Task 10 REDO: SSE Broadcaster
+
+### Completed
+- Created backend/src/sse.py: SSEBroadcaster with per-client asyncio.Queue(maxsize=50) fan-out
+- Created backend/src/api/stream.py: GET /api/stream using StreamingResponse(text/event-stream)
+- Updated sensors.py: broadcaster.broadcast("sensor_data", ...) after insert_reading
+- Updated analysis.py: broadcaster.broadcast("analysis", ...) after insert_analysis
+- Updated main.py: stream_router registered
+
+### Key Patterns
+- SSE with FastAPI: StreamingResponse(async_generator(), media_type="text/event-stream") — no third-party sse-starlette needed for FastAPI ≥0.135.0
+- Event format: `event: {type}\ndata: {json_str}\n\n` (double newline terminates event)
+- Disconnect detection: `await request.is_disconnected()` (async in Starlette)
+- Heartbeat: asyncio.wait_for(q.get(), timeout=15.0) catches TimeoutError → yields ping event
+- Dead client eviction: QueueFull exception during put_nowait marks client as dead; removed after broadcast loop
+- Single uvicorn worker required: in-memory broadcaster state is process-local
+- Headers: Cache-Control: no-cache, X-Accel-Buffering: no, Connection: keep-alive prevent nginx/proxy buffering
+
+### QA Results
+- ping event received immediately on connect: ✅
+- sensor_data event broadcast after POST /api/sensor-data: ✅ (id matched between POST response and SSE event)
+- Backend starts without errors: ✅
+- Committed: 004d519 feat(backend): add SSE broadcaster and stream endpoint

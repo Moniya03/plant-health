@@ -15,6 +15,7 @@ interface UseSensorDataResult {
   latest: SensorReading | null;
   isLoading: boolean;
   error: string | null;
+  refetch: () => Promise<void>;
 }
 
 export function useSensorData(): UseSensorDataResult {
@@ -46,5 +47,5 @@ export function useSensorData(): UseSensorDataResult {
   }, []);
 
   // Expose refetch for external callers (e.g., SSE updates in Task 13)
-  return { readings, latest, isLoading, error };
+  return { readings, latest, isLoading, error, refetch: fetchData };
 }

@@ -12,7 +12,7 @@ export function ConnectionStatus({ status }: { status: 'connected' | 'reconnecti
       className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-200 bg-white shadow-sm"
       data-testid="connection-status"
     >
-      <div className={`w-2 h-2 rounded-full ${current.color}`} />
+      <div className={`w-2 h-2 rounded-full ${current.color} ${status === 'reconnecting' ? 'animate-pulse' : ''}`} />
       <span className="text-sm font-medium text-gray-700">{current.text}</span>
     </div>
   );
