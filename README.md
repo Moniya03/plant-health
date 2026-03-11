@@ -199,16 +199,21 @@ The application is configured using environment variables. Ensure you copy `.env
 
 ## 🐳 Docker Deployment
 
-The entire stack can be launched seamlessly using Docker Compose to ensure environment parity across different machines.
+The backend image is published to GHCR with multi-arch support (`linux/amd64`, `linux/arm64`).
 
 ```bash
+# Pull and run directly
+docker pull ghcr.io/moniya03/plant-health/backend:latest
+docker run -d -p 8000:8000 --env-file .env -v plant-data:/app/data ghcr.io/moniya03/plant-health/backend:latest
+
+# Or use Docker Compose
 cd infra
-docker-compose up --build
+docker compose up -d
 ```
 
-This command initializes:
 -   **Backend Service**: Accessible at `http://localhost:8000`
 -   **Persistence**: SQLite database is persisted via a named Docker volume to ensure data safety across restarts.
+-   **Updates**: Run `docker compose pull && docker compose up -d` to update to the latest version.
 
 ## 🚧 Troubleshooting
 

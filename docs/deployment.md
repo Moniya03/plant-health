@@ -2,25 +2,38 @@
 
 ## Overview
 
-The Plant Health Monitoring System is designed for a split deployment architecture. The backend runs as a containerized Python application suitable for Docker-ready environments, while the frontend is optimized for static hosting platforms like Vercel.
+The Plant Health Monitoring System is designed for a split deployment architecture. The backend is published as a multi-arch Docker image on the GitHub Container Registry (GHCR), while the frontend is optimized for static hosting platforms like Vercel.
 
 ## Docker Deployment (Backend)
 
-### Building the Image
+### Pulling the Image
 
-Navigate to the backend directory and build the Docker image using the provided Dockerfile.
+The backend image is automatically built and published to GHCR on every version bump. Pull the latest image directly:
 
 ```bash
-cd backend
-docker build -t plant-health-backend .
+docker pull ghcr.io/moniya03/plant-health/backend:latest
 ```
+
+To pin a specific version:
+
+```bash
+docker pull ghcr.io/moniya03/plant-health/backend:0.1.2
+```
+
+**Supported platforms:** `linux/amd64`, `linux/arm64`
 
 ### Running the Container
 
 Start the backend container by mapping the internal port 8000 to your host, loading environment variables, and mounting a volume for persistent storage.
 
 ```bash
-docker run -p 8000:8000 --env-file .env -v plant-data:/app/data plant-health-backend
+docker run -d \
+  --name plant-health \
+  -p 8000:8000 \
+  --env-file .env \
+  -v plant-data:/app/data \
+  --restart unless-stopped \
+  ghcr.io/moniya03/plant-health/backend:latest
 ```
 
 ### Using Docker Compose
@@ -32,7 +45,45 @@ cd infra
 docker compose up -d
 ```
 
-The `docker-compose.yml` file is located in the `infra/` directory. It uses `../backend` as the build context and loads environment variables from `../.env`.
+The `docker-compose.yml` file is located in the `infra/` directory. It pulls the image from GHCR and loads environment variables from `../.env`.
+
+```yaml
+services:
+  backend:
+    image: ghcr.io/moniya03/plant-health/backend:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      - plant-data:/app/data
+    env_file:
+      - ../.env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  plant-data:
+```
+
+To update to a newer version:
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+### Building Locally (Development)
+
+If you need to build the image locally for development or testing:
+
+```bash
+cd backend
+docker build -t plant-health-backend .
+```
 
 ### Dockerfile Details
 
@@ -53,36 +104,8 @@ The API includes a dedicated health check endpoint at `GET /api/health`. It retu
 {
   "status": "healthy",
   "db": "connected",
-  "version": "0.1.0"
+  "version": "0.1.2"
 }
-```
-
-## Docker Compose Configuration
-
-The following `docker-compose.yml` provides a production-ready setup for the backend service.
-
-```yaml
-services:
-  backend:
-    build:
-      context: ../backend
-      dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
-    volumes:
-      - plant-data:/app/data
-    env_file:
-      - ../.env
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:8000/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-
-volumes:
-  plant-data:
 ```
 
 ## Vercel Deployment (Frontend)
@@ -101,13 +124,43 @@ The React frontend is designed for seamless deployment on Vercel.
 
 ### GitHub Actions
 
-The repository includes a GitHub Action for automated container publishing located at `.github/workflows/publish.yml`.
+The repository includes a GitHub Action for automated container publishing and releases located at `.github/workflows/publish.yml`.
 
-- **Trigger**: The workflow runs on every push to the `main` branch that modifies `backend/pyproject.toml`.
-- **Logic**: It compares the version string in `pyproject.toml` with the previous commit. If the version has changed, it builds and pushes a new image to the GitHub Container Registry (GHCR).
-- **Tags**: Images are tagged with both `:latest` and the specific version number, e.g., `ghcr.io/{owner}/{repo}/backend:0.1.0`.
-- **Permissions**: The job requires `contents:read` and `packages:write` permissions.
-- **Authentication**: It uses the automatic `GITHUB_TOKEN` for registry authentication; no manual secrets are required for this step.
+**Trigger**: The workflow runs on every push to the `main` branch that modifies `backend/pyproject.toml`.
+
+**Pipeline stages:**
+
+| Stage | Purpose |
+| :--- | :--- |
+| **check-version** | Compares version in `pyproject.toml` with previous commit. Skips pipeline if unchanged. |
+| **build-and-push** | Builds multi-arch Docker image (`linux/amd64`, `linux/arm64`) and pushes to GHCR. |
+| **release** | Creates a GitHub Release with auto-generated release notes and Docker pull instructions. |
+
+**Multi-arch support**: The workflow uses QEMU and Docker Buildx to build images for both `amd64` (standard servers) and `arm64` (AWS Graviton, Apple Silicon, Raspberry Pi).
+
+**Tags**: Images are tagged with both `:latest` and the specific version number, e.g., `ghcr.io/moniya03/plant-health/backend:0.1.2`.
+
+**Releases**: Each version bump automatically creates a GitHub Release tagged `vX.Y.Z` with auto-generated release notes summarizing changes since the last release.
+
+**Permissions**: The job requires `contents:write` (for releases) and `packages:write` (for GHCR).
+
+**Authentication**: It uses the automatic `GITHUB_TOKEN` for both registry and release authentication; no manual secrets are required.
+
+### Triggering a Release
+
+To publish a new version:
+
+1. Update the `version` field in `backend/pyproject.toml`.
+2. Commit and push to `main`.
+3. The CI pipeline automatically builds, pushes, and creates a release.
+
+```bash
+# Example: bump version
+sed -i 's/version = "0.1.2"/version = "0.2.0"/' backend/pyproject.toml
+git add backend/pyproject.toml
+git commit -m "chore(backend): bump version to 0.2.0"
+git push origin main
+```
 
 ## Production Environment Variables
 
@@ -127,3 +180,4 @@ Ensure these variables are correctly configured in your production environment.
 - **Reverse Proxy**: The backend does not include built-in rate limiting. We recommend placing a reverse proxy like Nginx or Caddy in front of the container for SSL termination and traffic control.
 - **Security**: Always set `CORS_ORIGINS` to your specific frontend domain rather than a wildcard to prevent unauthorized access.
 - **Monitoring**: Use the `/api/health` endpoint with your monitoring tool to track backend uptime and database connectivity.
+- **Updates**: Use `docker compose pull && docker compose up -d` to pull the latest image and restart with zero downtime.
