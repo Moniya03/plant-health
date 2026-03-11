@@ -24,19 +24,19 @@ The system is designed with a decoupled architecture, allowing the hardware laye
 
 ```mermaid
 graph TD
-    ESP32[ESP32 Microcontroller] -->|HTTP POST| FastAPI[FastAPI Backend]
-    FastAPI -->|Store Data| SQLite[(SQLite DB)]
-    FastAPI -->|Trigger| PocketFlow[PocketFlow AI Pipeline]
-    
-    subgraph PocketFlow [AI Analysis Flow]
+    ESP32[ESP32 Microcontroller] -->|HTTP POST| API[FastAPI Backend]
+    API -->|Store Data| SQLite[(SQLite DB)]
+    API -->|Trigger| AIFlow
+
+    subgraph AIFlow[AI Analysis Flow]
         direction LR
         SA[SensorAnalysis] -->|Anomaly Detected| PD[PlantDiagnosis]
         PD --> CA[CareAdvisor]
         CA --> WR[WebResearch]
     end
-    
-    FastAPI -->|SSE| React[React Dashboard]
-    PocketFlow -->>|Results| FastAPI
+
+    AIFlow -.->|Results| API
+    API -->|SSE| React[React Dashboard]
 ```
 
 ## 📊 Data Flow
