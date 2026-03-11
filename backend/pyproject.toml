@@ -1,0 +1,32 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "plant-health-backend"
+version = "0.1.0"
+description = "IoT sensor data collection and AI-powered plant health analysis"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.135.0",
+    "uvicorn[standard]",
+    "aiosqlite",
+    "litellm",
+    "pocketflow",
+    "pydantic",
+    "httpx",
+    "python-dotenv",
+    "tavily-python",
+    "duckduckgo-search",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "black",
+    "ruff",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
