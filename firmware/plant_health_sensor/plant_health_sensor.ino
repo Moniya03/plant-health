@@ -6,7 +6,7 @@
 // Configuration — edit these constants for your setup
 #define WIFI_SSID "YOUR_WIFI_SSID"
 #define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
-#define BACKEND_URL "http://YOUR_BACKEND_IP:8000/api/sensor-data"
+#define BACKEND_URL "http://192.168.1.50:9966/api/sensor-data"
 #define SENSOR_INTERVAL_MS 60000  // 1 minute, configurable
 #define SOIL_MOISTURE_PIN 34      // ADC pin for soil moisture sensor (V0/analog output)
 #define DHT_PIN 4                 // Digital pin for DHT11 sensor
