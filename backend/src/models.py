@@ -7,7 +7,7 @@ class SensorReading(BaseModel):
     soil_moisture: float = Field(ge=0, le=100, description="Soil moisture %")
     temperature: float = Field(ge=-40, le=80, description="Temperature °C")
     humidity: float = Field(ge=0, le=100, description="Humidity %")
-    light: float = Field(ge=0, le=200000, description="Light in lux")
+    light: float = Field(ge=0, le=100, description="Light level (0=dark, 100=bright)")
 
 
 class SensorReadingResponse(BaseModel):

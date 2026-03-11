@@ -37,12 +37,12 @@ def format_diagnosis_prompt(prep_res: dict) -> str:
     recent = prep_res.get("recent_readings", [])
     prompt = f"""Plant species: {species}
 Current sensor readings:
-- Soil moisture: {reading.get('soil_moisture', 'N/A')}%
-- Temperature: {reading.get('temperature', 'N/A')}°C
-- Humidity: {reading.get('humidity', 'N/A')}%
-- Light: {reading.get('light', 'N/A')} lux
+- Soil moisture: {reading.get("soil_moisture", "N/A")}%
+- Temperature: {reading.get("temperature", "N/A")}°C
+- Humidity: {reading.get("humidity", "N/A")}%
+- Light: {reading.get("light", "N/A")}% (0=dark, 100=bright)
 
-Rule-based issues detected: {rule_issues if rule_issues else 'None'}
+Rule-based issues detected: {rule_issues if rule_issues else "None"}
 Recent readings count: {len(recent)}
 
 Provide plant health analysis as JSON."""
@@ -56,5 +56,5 @@ def format_care_prompt(prep_res: dict) -> str:
     reading = prep_res.get("reading", {})
     return f"""Plant: {species}
 Diagnosis: {diagnosis}
-Current conditions: moisture={reading.get('soil_moisture')}%, temp={reading.get('temperature')}°C
+Current conditions: moisture={reading.get("soil_moisture")}%, temp={reading.get("temperature")}°C
 Provide specific care recommendations as JSON."""

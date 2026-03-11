@@ -8,10 +8,10 @@
 #define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
 #define BACKEND_URL "http://YOUR_BACKEND_IP:8000/api/sensor-data"
 #define SENSOR_INTERVAL_MS 60000  // 1 minute, configurable
-#define SOIL_MOISTURE_PIN 34      // ADC pin for capacitive soil moisture sensor
+#define SOIL_MOISTURE_PIN 34      // ADC pin for soil moisture sensor (V0/analog output)
 #define DHT_PIN 4                 // Digital pin for DHT11 sensor
 #define DHT_TYPE DHT11
-#define LDR_PIN 35                // ADC pin for LDR (light sensor)
+#define LDR_PIN 35                // Digital pin for LDR module (D0 output)
 
 // Global state
 DHT dht(DHT_PIN, DHT_TYPE);
@@ -26,7 +26,7 @@ struct DHTData {
 // Forward declarations
 float readSoilMoisture();
 DHTData readDHT();
-float readLDR();
+float readLight();
 
 void setup() {
   Serial.begin(115200);
@@ -78,7 +78,7 @@ void loop() {
   // Read all sensors
   float soilMoisture = readSoilMoisture();
   DHTData dhtData = readDHT();
-  float lux = readLDR();
+  float light = readLight();
 
   // Log sensor values
   Serial.print("Soil Moisture: ");
@@ -91,8 +91,8 @@ void loop() {
   Serial.print(dhtData.humidity);
   Serial.println("%");
 
-  Serial.print("Light (lux approx): ");
-  Serial.println(lux);
+  Serial.print("Light level:");
+  Serial.println(light);
 
   // CRITICAL: Skip POST if DHT readings are NaN
   if (!dhtData.valid || isnan(dhtData.temperature) || isnan(dhtData.humidity)) {
@@ -106,7 +106,7 @@ void loop() {
   doc["soil_moisture"] = soilMoisture;
   doc["temperature"] = dhtData.temperature;
   doc["humidity"] = dhtData.humidity;
-  doc["light_lux"] = lux;
+  doc["light"] = light;
 
   String jsonPayload;
   serializeJson(doc, jsonPayload);
@@ -136,11 +136,11 @@ void loop() {
   delay(SENSOR_INTERVAL_MS);
 }
 
-// Read capacitive soil moisture sensor
+// Read soil moisture sensor (HW-103)
 // Returns 0-100 percentage (0 = dry, 100 = wet)
 float readSoilMoisture() {
   int rawValue = analogRead(SOIL_MOISTURE_PIN);
-  // Higher ADC value = drier soil for capacitive sensor
+  // Higher ADC value = drier soil
   // Map ADC range (0-4095) to moisture percentage (0-100)
   float moisture = map(rawValue, 4095, 0, 0, 100);
   return moisture;
@@ -163,23 +163,11 @@ DHTData readDHT() {
   return data;
 }
 
-// Read LDR (light-dependent resistor) and approximate lux
-// Returns lux approximation (0-65535 range approx)
-float readLDR() {
-  int rawValue = analogRead(LDR_PIN);
-  // Convert ADC reading to voltage (3.3V reference, 12-bit ADC)
-  float voltage = rawValue * (3.3 / 4095.0);
-  // Approximate lux using a typical 10kΩ voltage divider formula
-  // Resistance of LDR: R_ldr = (3.3 - voltage) / (voltage / 10000.0)
-  // Avoid division by zero
-  if (voltage < 0.001) {
-    return 0.0;
-  }
-  float rLdr = (3.3 - voltage) * 10000.0 / voltage;
-  // Approximate lux: lux = 500 / (R_ldr / 1000)
-  float lux = 500.0 / (rLdr / 1000.0);
-  // Clamp to reasonable range
-  if (lux < 0.0) lux = 0.0;
-  if (lux > 65535.0) lux = 65535.0;
-  return lux;
+// Read LDR module digital output (bright=100, dark=0)
+// Returns 0.0 (dark) or 100.0 (bright)
+// LM393 comparator modules typically output LOW when bright, HIGH when dark
+float readLight() {
+  int raw = digitalRead(LDR_PIN);
+  // If your module reads inverted, swap the 100.0 and 0.0 values
+  return (raw == LOW) ? 100.0 : 0.0;
 }

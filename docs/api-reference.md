@@ -15,7 +15,7 @@ Submit a sensor reading.
   "soil_moisture": 45.2,
   "temperature": 23.5,
   "humidity": 65.0,
-  "light": 1200.0
+  "light": 100.0
 }
 ```
 
@@ -23,7 +23,7 @@ Submit a sensor reading.
 * soil_moisture: 0-100 (percentage)
 * temperature: -40 to 80 (°C)
 * humidity: 0-100 (percentage)
-* light: 0-200000 (lux)
+* light: 0-100 (percentage, 0=dark, 100=bright)
 
 **Responses**
 * 201 Created:
@@ -39,7 +39,7 @@ Broadcasts SSE "sensor_data" event.
 ```bash
 curl -X POST http://localhost:8000/api/sensor-data \
   -H "Content-Type: application/json" \
-  -d '{"soil_moisture": 45.2, "temperature": 23.5, "humidity": 65.0, "light": 1200.0}'
+  -d '{"soil_moisture": 45.2, "temperature": 23.5, "humidity": 65.0, "light": 100.0}'
 ```
 
 ### GET /api/sensor-data
@@ -54,13 +54,13 @@ Get historical readings.
   {
     "readings": [
       {
-        "id": 1,
-        "soil_moisture": 45.2,
-        "temperature": 23.5,
-        "humidity": 65.0,
-        "light": 1200.0,
-        "created_at": "2024-01-01T00:00:00"
-      }
+         "id": 1,
+         "soil_moisture": 45.2,
+         "temperature": 23.5,
+         "humidity": 65.0,
+         "light": 100.0,
+         "created_at": "2024-01-01T00:00:00"
+       }
     ]
   }
   ```
@@ -226,7 +226,7 @@ Content-Type: text/event-stream
 **Example event format**
 ```
 event: sensor_data
-data: {"soil_moisture": 45.2, "temperature": 23.5, "humidity": 65.0, "light": 1200.0}
+data: {"soil_moisture": 45.2, "temperature": 23.5, "humidity": 65.0, "light": 100.0}
 
 event: ping
 data:
