@@ -14,6 +14,16 @@ import { AnalysisHistory } from '../components/AnalysisHistory';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 
+const containerVariants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.1 } },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+};
+
 export default function Dashboard() {
   const { readings, latest, isLoading, error, refetch } = useSensorData();
   const [activeLatest, setActiveLatest] = useState(latest);
@@ -160,66 +170,76 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <AnimatePresence mode="popLayout">
-                {isLoading ? (
-                  Array.from({ length: 4 }).map((_, i) => (
+            <AnimatePresence mode="popLayout">
+              {isLoading ? (
+                <motion.div
+                  key="skeleton-grid"
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  {Array.from({ length: 4 }).map((_, i) => (
                     <motion.div
                       key={`skeleton-${i}`}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
+                      variants={cardVariants}
                       exit={{ opacity: 0, scale: 0.9 }}
-                      transition={{ delay: i * 0.1 }}
                     >
                       <Skeleton className="h-40 rounded-xl" />
                     </motion.div>
-                  ))
-                ) : activeLatest ? (
-                  [
-                    <motion.div key="card-moisture" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }}>
-                      <SensorCard
-                        label="Soil Moisture"
-                        value={activeLatest.soil_moisture}
-                        unit="%"
-                        icon={Droplets}
-                        status={getMoistureStatus(activeLatest.soil_moisture)}
-                        testId="sensor-card-moisture"
-                      />
-                    </motion.div>,
-                    <motion.div key="card-temp" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ delay: 0.1 }}>
-                      <SensorCard
-                        label="Temperature"
-                        value={activeLatest.temperature}
-                        unit="°C"
-                        icon={Thermometer}
-                        status={getTempStatus(activeLatest.temperature)}
-                        testId="sensor-card-temperature"
-                      />
-                    </motion.div>,
-                    <motion.div key="card-humidity" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ delay: 0.2 }}>
-                      <SensorCard
-                        label="Humidity"
-                        value={activeLatest.humidity}
-                        unit="%"
-                        icon={Wind}
-                        status={getHumidityStatus(activeLatest.humidity)}
-                        testId="sensor-card-humidity"
-                      />
-                    </motion.div>,
-                    <motion.div key="card-light" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ delay: 0.3 }}>
-                      <SensorCard
-                        label="Light Level"
-                        value={activeLatest.light}
-                        unit="lux"
-                        icon={Sun}
-                        status={getLightStatus(activeLatest.light)}
-                        testId="sensor-card-light"
-                      />
-                    </motion.div>
-                  ]
-                ) : null}
-              </AnimatePresence>
-            </div>
+                  ))}
+                </motion.div>
+              ) : activeLatest ? (
+                <motion.div
+                  key="sensor-grid"
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  <motion.div key="card-moisture" variants={cardVariants}>
+                    <SensorCard
+                      label="Soil Moisture"
+                      value={activeLatest.soil_moisture}
+                      unit="%"
+                      icon={Droplets}
+                      status={getMoistureStatus(activeLatest.soil_moisture)}
+                      testId="sensor-card-moisture"
+                    />
+                  </motion.div>
+                  <motion.div key="card-temp" variants={cardVariants}>
+                    <SensorCard
+                      label="Temperature"
+                      value={activeLatest.temperature}
+                      unit="°C"
+                      icon={Thermometer}
+                      status={getTempStatus(activeLatest.temperature)}
+                      testId="sensor-card-temperature"
+                    />
+                  </motion.div>
+                  <motion.div key="card-humidity" variants={cardVariants}>
+                    <SensorCard
+                      label="Humidity"
+                      value={activeLatest.humidity}
+                      unit="%"
+                      icon={Wind}
+                      status={getHumidityStatus(activeLatest.humidity)}
+                      testId="sensor-card-humidity"
+                    />
+                  </motion.div>
+                  <motion.div key="card-light" variants={cardVariants}>
+                    <SensorCard
+                      label="Light Level"
+                      value={activeLatest.light}
+                      unit="lux"
+                      icon={Sun}
+                      status={getLightStatus(activeLatest.light)}
+                      testId="sensor-card-light"
+                    />
+                  </motion.div>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
           </>
         )}
       </div>
