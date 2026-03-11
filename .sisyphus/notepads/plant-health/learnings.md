@@ -163,3 +163,51 @@
 - Return `SensorReadingResponse` not raw dict to get consistent schema
 - For GET endpoints returning plain dicts, no response_model needed
 - `dict(row)` on aiosqlite.Row gives plain dict safe to return from FastAPI
+
+## [2026-03-11] Task 6: PocketFlow Agent 1 - Sensor Analysis (Rule-Based)
+
+### Completed
+- ✅ Added `backend/src/agents/__init__.py` as empty package marker
+- ✅ Added `backend/src/agents/sensor_analysis.py` with `SensorAnalysisNode(AsyncNode)` using `prep_async` → `exec_async` → `post_async`
+- ✅ Implemented pure rule-based checks for soil moisture, temperature, humidity, and light (no LLM calls)
+- ✅ Added routing actions from `post_async`: `healthy`, `anomaly`, `critical`
+- ✅ Healthy path now writes `shared["final_analysis"]` with `health_score`, `status`, `issues`, `recommendations`, `analysis_type`, `model_used`
+- ✅ Health score function clamps to 70-100 and uses moisture/temperature deviation from midpoint
+- ✅ PocketFlow import verified (`ok`)
+- ✅ QA Scenario 1 (normal): `Anomaly: False`, `Needs AI: False`, `Action: healthy`, `Health score: 97`
+- ✅ QA Scenario 2 (dry soil 10%): `Anomaly: True`, issue contains `dry`, `Action: anomaly`
+- ✅ Evidence saved: `.sisyphus/evidence/task-6-pocketflow.txt`, `.sisyphus/evidence/task-6-normal.txt`, `.sisyphus/evidence/task-6-dry.txt`
+
+### Patterns
+- `exec_async()` has no access to `shared`; pass all required inputs through `prep_async()`
+- Rule-based agent is the cost gate: only anomaly/critical paths should request AI later in the flow
+- Keep PocketFlow node state in `shared` dict only; avoid mutable instance state
+
+## Task 7: PocketFlow Utils — LiteLLM, search_web, prompts (2026-03-11)
+
+### LiteLLM
+- `from litellm import acompletion` — async variant; must be used in async context
+- Import works without API key (no runtime error at import time)
+- `call_llm_stream` must be an async generator (`async def` + `yield`)
+
+### DuckDuckGo Search (duckduckgo_search v8.1.1)
+- Package has been renamed to `ddgs` — emits RuntimeWarning but still works via `duckduckgo_search`
+- `DDGS().text()` v8.x hardcodes bing backend: `backends = ["bing"]  # temporaly disable html and lite backends`
+- Bing backend is unreliable in async thread contexts (returns 0 results) but sync direct calls work
+- **WORKAROUND**: Use `_text_html()` directly instead of `text()` — reliable in `asyncio.to_thread`
+- `asyncio.to_thread()` works; `loop.run_in_executor(None, lambda: ...)` fails silently for DDGS
+- Lambda captures may lose context in `run_in_executor` — always prefer `asyncio.to_thread` with named function
+
+### Tavily
+- `TavilyClient` is synchronous — use `asyncio.to_thread(client.search, query, max_results=n)`
+- Pass positional args to `asyncio.to_thread` rather than using a lambda
+
+### Prompts
+- `format_diagnosis_prompt` and `format_care_prompt` are pure functions — no async needed
+- JSON structure prompts work best with litellm's `response_format` parameter
+
+## Frontend Setup
+- Tailwind v4 setup works with Vite out of the box using `@tailwindcss/vite`.
+- Shadcn UI initialization (`npx shadcn@latest init -d`) handles Tailwind v4 perfectly, adding the base variables inside `@theme inline` dynamically without breaking existing `--color-*` rules added prior to init.
+- Shadcn UI requires `compilerOptions.baseUrl` and `compilerOptions.paths` in `tsconfig.json`, otherwise it will fail to validate aliases, even though modern Vite uses `tsconfig.app.json`.
+- React 19 imported by Vite 6 does not need `import React from 'react'` in TSX, keeping it causes TS6133 warning/error.
