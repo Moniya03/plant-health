@@ -69,8 +69,8 @@ Thumbs.db
 .sublime-project
 .sublime-workspace
 
-# Evidence and logs
-.sisyphus/evidence/
+# Sisyphus orchestration artifacts
+.sisyphus/
 
 # uv
 .uv/
