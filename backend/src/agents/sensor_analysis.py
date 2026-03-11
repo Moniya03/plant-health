@@ -87,27 +87,43 @@ class SensorAnalysisNode(AsyncNode):  # pyright: ignore[reportMissingTypeArgumen
 
         # Check soil moisture
         if reading["soil_moisture"] < thresholds["soil_moisture_low"]:
-            issues.append(f"Soil is too dry ({reading['soil_moisture']:.1f}%) — needs watering")
+            issues.append(
+                f"Soil is too dry ({reading['soil_moisture']:.1f}%) — needs watering"
+            )
         elif reading["soil_moisture"] > thresholds["soil_moisture_high"]:
-            issues.append(f"Soil is overwatered ({reading['soil_moisture']:.1f}%) — reduce watering")
+            issues.append(
+                f"Soil is overwatered ({reading['soil_moisture']:.1f}%) — reduce watering"
+            )
 
         # Check temperature
         if reading["temperature"] < thresholds["temperature_low"]:
-            issues.append(f"Temperature too cold ({reading['temperature']:.1f}°C) — move to warmer location")
+            issues.append(
+                f"Temperature too cold ({reading['temperature']:.1f}°C) — move to warmer location"
+            )
         elif reading["temperature"] > thresholds["temperature_high"]:
-            issues.append(f"Temperature too hot ({reading['temperature']:.1f}°C) — move away from heat")
+            issues.append(
+                f"Temperature too hot ({reading['temperature']:.1f}°C) — move away from heat"
+            )
 
         # Check humidity
         if reading["humidity"] < thresholds["humidity_low"]:
-            issues.append(f"Air humidity too low ({reading['humidity']:.1f}%) — consider a humidifier")
+            issues.append(
+                f"Air humidity too low ({reading['humidity']:.1f}%) — consider a humidifier"
+            )
         elif reading["humidity"] > thresholds["humidity_high"]:
-            issues.append(f"Air humidity too high ({reading['humidity']:.1f}%) — improve ventilation")
+            issues.append(
+                f"Air humidity too high ({reading['humidity']:.1f}%) — improve ventilation"
+            )
 
         # Check light
         if reading["light"] < thresholds["light_low"]:
-            issues.append(f"Light level too low ({reading['light']:.0f} lux) — move to brighter location")
+            issues.append(
+                f"Light level too low ({reading['light']:.0f}%) — move to brighter location"
+            )
         elif reading["light"] > thresholds["light_high"]:
-            issues.append(f"Light level too intense ({reading['light']:.0f} lux) — provide shade")
+            issues.append(
+                f"Light level too intense ({reading['light']:.0f}%) — provide shade"
+            )
 
         # Critical: moisture extremely low OR temperature extremely high
         is_critical = (
@@ -124,7 +140,9 @@ class SensorAnalysisNode(AsyncNode):  # pyright: ignore[reportMissingTypeArgumen
         }
 
     @override
-    async def post_async(self, shared: dict[str, object], prep_res: PrepResult, exec_res: ExecResult) -> str:
+    async def post_async(
+        self, shared: dict[str, object], prep_res: PrepResult, exec_res: ExecResult
+    ) -> str:
         """Store results in shared, decide routing."""
         store = cast(SharedStore, cast(object, shared))
         store["rule_analysis"] = exec_res
@@ -147,12 +165,18 @@ class SensorAnalysisNode(AsyncNode):  # pyright: ignore[reportMissingTypeArgumen
             }
             return "healthy"  # → skip AI agents
 
-    def _calculate_health_score(self, reading: SensorReading, thresholds: SensorThresholds) -> int:
+    def _calculate_health_score(
+        self, reading: SensorReading, thresholds: SensorThresholds
+    ) -> int:
         """Score 70-100 based on proximity to optimal range center."""
         score = 100
         # Soil moisture: optimal midpoint
-        sm_mid = (thresholds["soil_moisture_low"] + thresholds["soil_moisture_high"]) / 2
-        sm_range = (thresholds["soil_moisture_high"] - thresholds["soil_moisture_low"]) / 2
+        sm_mid = (
+            thresholds["soil_moisture_low"] + thresholds["soil_moisture_high"]
+        ) / 2
+        sm_range = (
+            thresholds["soil_moisture_high"] - thresholds["soil_moisture_low"]
+        ) / 2
         sm_deviation = abs(reading["soil_moisture"] - sm_mid) / sm_range
         score -= int(min(sm_deviation, 1.0) * 10)
 

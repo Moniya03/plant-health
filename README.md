@@ -83,7 +83,7 @@ sequenceDiagram
 | :--- | :--- |
 | **Backend** | Python 3.11+, FastAPI (v0.1.0), aiosqlite, LiteLLM, PocketFlow, Uvicorn |
 | **Frontend** | React 19 (v0.0.0), Vite 7, TypeScript, Tailwind CSS v4, Shadcn UI, Recharts, Framer Motion |
-| **Hardware** | ESP32 DevKit, DHT11 (Temperature/Humidity), Capacitive Soil Moisture Sensor, LDR (Light) |
+| **Hardware** | ESP32 DevKit, DHT11 (Temperature/Humidity), HW-103 Soil Moisture Sensor, LDR Module (Light) |
 | **Infrastructure** | Docker, Docker Compose, GitHub Actions, GHCR, Vercel |
 | **AI/ML** | LiteLLM (OpenRouter/OpenAI/Anthropic), Tavily Search API, DuckDuckGo Search |
 
@@ -167,9 +167,9 @@ npm run dev
 
 | Sensor | ESP32 Pin | Type | Notes |
 | :--- | :--- | :--- | :--- |
-| **DHT11 (Data)** | GPIO 4 | Digital | Requires 10k Pull-up resistor |
-| **Soil Moisture** | GPIO 34 | Analog | Use Capacitive sensor for longevity |
-| **LDR (Light)** | GPIO 35 | Analog | Use with 10k resistor voltage divider |
+| **DHT11 (Data)** | GPIO 4 | Digital | 3-pin module (built-in pull-up) |
+| **Soil Moisture** | GPIO 34 | Analog | HW-103 resistive module (V0 analog output) |
+| **LDR (Light)** | GPIO 35 | Digital | LDR module with LM393 comparator (D0 output) |
 | **VCC** | 3.3V | Power | Ensure stable power supply |
 | **GND** | GND | Ground | Common ground for all components |
 
@@ -190,8 +190,8 @@ The application is configured using environment variables. Ensure you copy `.env
 | `TEMPERATURE_HIGH` | Maximum healthy ambient temperature (Celsius) | `35` |
 | `HUMIDITY_LOW` | Minimum healthy relative humidity percentage | `30` |
 | `HUMIDITY_HIGH` | Maximum healthy relative humidity percentage | `80` |
-| `LIGHT_LOW` | Threshold for insufficient light conditions (lux) | `200` |
-| `LIGHT_HIGH` | Threshold for excessive direct light exposure (lux) | `50000` |
+| `LIGHT_LOW` | Threshold for low light level (%) | `50` |
+| `LIGHT_HIGH` | Threshold for high light level (%, set >100 to disable) | `101` |
 | `MIN_READINGS_FOR_ANALYSIS` | Number of readings before AI is triggered | `5` |
 | `ANALYSIS_COOLDOWN_MINUTES` | Cooldown period between AI analysis sessions | `30` |
 | `LLM_MAX_BUDGET` | Maximum cost cap for LLM API usage (USD) | `10.0` |

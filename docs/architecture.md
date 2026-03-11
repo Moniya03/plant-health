@@ -9,8 +9,8 @@ graph TB
   subgraph Hardware["🔌 Hardware Layer"]
     ESP32["ESP32 DevKit V1"]
     DHT11["DHT11<br/>Temp & Humidity"]
-    SOIL["Capacitive Soil<br/>Moisture Sensor"]
-    LDR["LDR + 10kΩ<br/>Light Sensor"]
+    SOIL["HW-103 Soil<br/>Moisture Sensor"]
+    LDR["LDR Module<br/>Light Sensor"]
   end
   
   subgraph Backend["⚙️ Backend (FastAPI)"]

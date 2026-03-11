@@ -46,8 +46,8 @@ Fill in the variables in your `.env` file. The table below lists every variable 
 | TEMPERATURE_HIGH | High threshold °C | 35 |
 | HUMIDITY_LOW | Low threshold % | 30 |
 | HUMIDITY_HIGH | High threshold % | 80 |
-| LIGHT_LOW | Low threshold lux | 200 |
-| LIGHT_HIGH | High threshold lux | 50000 |
+| LIGHT_LOW | Low light level threshold (%) | 50 |
+| LIGHT_HIGH | High light level threshold (%) | 101 |
 | MIN_READINGS_FOR_ANALYSIS | Minimum readings before analysis | 5 |
 | ANALYSIS_COOLDOWN_MINUTES | Cooldown between analyses | 30 |
 | LLM_MAX_BUDGET | Max LLM spend in USD | 10.0 |

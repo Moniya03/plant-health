@@ -31,7 +31,7 @@ export function SensorChart({ readings, title }: SensorChartProps) {
   const chartData = [...readings].reverse().map(r => ({
     ...r,
     formattedDate: new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    light_normalized: r.light / 50,
+    light_normalized: r.light,
   }));
 
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -43,7 +43,7 @@ export function SensorChart({ readings, title }: SensorChartProps) {
             {payload.map((entry: any) => {
               const isLight = entry.dataKey === 'light_normalized' || entry.name === 'Light';
               const value = isLight ? entry.payload.light : entry.value;
-              const unit = isLight ? ' lux' : entry.dataKey === 'temperature' || entry.name === 'Temperature' ? '°C' : '%';
+              const unit = isLight ? '%' : entry.dataKey === 'temperature' || entry.name === 'Temperature' ? '°C' : '%';
               return (
                 <div key={entry.dataKey || entry.name} className="flex items-center gap-3">
                   <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.color }} />

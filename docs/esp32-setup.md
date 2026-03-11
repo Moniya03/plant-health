@@ -8,9 +8,8 @@ Build your plant health sensor node using this hardware manual. It covers everyt
 | :--- | :--- | :--- | :--- |
 | ESP32 DevKit V1 (30-pin) | 1 | WiFi-enabled microcontroller | $5-8 |
 | DHT11 Sensor Module | 1 | Temperature and humidity sensor (breakout board with 3 pins) | $2-3 |
-| Capacitive Soil Moisture Sensor v1.2 | 1 | Corrosion-resistant soil moisture sensor | $2-4 |
-| LDR (Photoresistor) | 1 | Light-dependent resistor (5mm) | $0.50 |
-| 10kΩ Resistor | 1 | For LDR voltage divider circuit | $0.10 |
+| HW-103 Soil Moisture Sensor | 1 | Resistive soil moisture sensor module with analog + digital output | $2-4 |
+| LDR Sensor Module | 1 | Light sensor module with LM393 comparator (digital output) | $1-2 |
 | Breadboard | 1 | For prototyping connections | $3-5 |
 | Jumper Wires | ~10 | Male-to-male and male-to-female | $2-3 |
 | Micro-USB Cable | 1 | For ESP32 power and programming | $2 |
@@ -22,14 +21,15 @@ Check this table for the physical connections between your sensors and the ESP32
 | Sensor | Sensor Pin | ESP32 Pin | ESP32 Label | Signal Type |
 | :--- | :--- | :--- | :--- | :--- |
 | DHT11 | VCC | 3V3 | 3.3V Power | Power |
-| DHT11 | DATA | GPIO4 | IO4 | Digital (one-wire) |
+| DHT11 | DATA | GPIO4 | D4 | Digital (one-wire) |
 | DHT11 | GND | GND | Ground | Ground |
 | Soil Moisture | VCC | 3V3 | 3.3V Power | Power |
-| Soil Moisture | AOUT | GPIO34 | IO34 (ADC1_CH6) | Analog |
+| Soil Moisture | V0 | GPIO34 | D34 (ADC1_CH6) | Analog |
 | Soil Moisture | GND | GND | Ground | Ground |
-| LDR (Leg A) | N/A | 3V3 | 3.3V Power | Power |
-| LDR (Leg B) + 10kΩ top | N/A | GPIO35 | IO35 (ADC1_CH7) | Analog |
-| 10kΩ bottom | N/A | GND | Ground | Ground |
+| Soil Moisture | D0 | — | — | Digital (threshold, unused by firmware) |
+| LDR Module | VCC | 3V3 | 3.3V Power | Power |
+| LDR Module | D0 | GPIO35 | D35 | Digital |
+| LDR Module | GND | GND | Ground | Ground |
 
 ## 📡 Wiring Diagrams
 
@@ -53,28 +53,27 @@ graph LR
 
   subgraph SOIL["Soil Moisture Sensor"]
     S_VCC["VCC"]
-    S_AOUT["AOUT"]
+    S_V0["V0"]
     S_GND["GND"]
   end
 
-  subgraph LDR_CKT["LDR Circuit"]
-    LDR_A["LDR Leg A"]
-    LDR_B["LDR Leg B"]
-    RES["10kΩ Resistor"]
+  subgraph LDR_MODULE["LDR Sensor Module"]
+    L_VCC["VCC"]
+    L_D0["D0"]
+    L_GND["GND"]
   end
 
   V33 --> D_VCC
   V33 --> S_VCC
-  V33 --> LDR_A
+  V33 --> L_VCC
 
   GPIO4 --> D_DATA
-  GPIO34 --> S_AOUT
-  GPIO35 --> LDR_B
-  GPIO35 --> RES
+  GPIO34 --> S_V0
+  GPIO35 --> L_D0
 
   GND --> D_GND
   GND --> S_GND
-  GND --> RES
+  GND --> L_GND
 ```
 
 ## ⚡ Detailed Wiring Instructions
@@ -85,38 +84,33 @@ Set up your connections by following these steps for each module.
 - Hook up DHT11 VCC to ESP32 3V3.
 - Link DHT11 DATA to ESP32 GPIO4.
 - Connect DHT11 GND to ESP32 GND.
-- Add a 10kΩ pull-up resistor between the DATA and VCC pins if you use a bare 4-pin DHT11 instead of a module.
+- The 3-pin module includes a built-in pull-up resistor. No external resistor needed.
 
-### 2. Capacitive Soil Moisture Sensor
+### 2. Soil Moisture Sensor (HW-103)
 - Attach the sensor VCC to ESP32 3V3. (CRITICAL: Do not use 5V or you'll fry the ESP32 ADC).
-- Wire the sensor AOUT/SIG to ESP32 GPIO34.
+- Wire the sensor V0 (analog output) to ESP32 GPIO34.
 - Join the sensor GND to ESP32 GND.
 
-### 3. LDR + Voltage Divider
-- Run a jumper from LDR Leg A to ESP32 3V3.
-- Connect LDR Leg B to ESP32 GPIO35.
-- Link one end of the 10kΩ resistor to the GPIO35 junction.
-- Fasten the other end of the resistor to GND.
-- Your circuit now has the LDR on the high side and the resistor on the low side.
+### 3. LDR Sensor Module
+- Connect LDR module VCC to ESP32 3V3.
+- Connect LDR module D0 to ESP32 GPIO35 (D35).
+- Connect LDR module GND to ESP32 GND.
+- Note: Adjust the onboard potentiometer to set the desired light/dark switching threshold.
 
 ## 🔧 ASCII Wiring Diagram
 
 ```
 ESP32 3.3V ──┬──────────── DHT11 VCC
-             ├──────────── Soil Moisture VCC  
-             └──── LDR Leg A
-                     │
-                  LDR Leg B
-                     │
-ESP32 GPIO35 ────────┤
-                     │
-                  [10kΩ]
-                     │
-ESP32 GND ───┬───────┴── DHT11 GND
+             ├──────────── Soil Moisture VCC
+             └──────────── LDR Module VCC
+
+ESP32 GND  ──┬──────────── DHT11 GND
              ├──────────── Soil Moisture GND
-             
-ESP32 GPIO4  ──────────── DHT11 DATA
-ESP32 GPIO34 ──────────── Soil Moisture AOUT
+             └──────────── LDR Module GND
+
+ESP32 D4  (GPIO4)  ────── DHT11 DAT
+ESP32 D34 (GPIO34) ────── Soil Moisture V0
+ESP32 D35 (GPIO35) ────── LDR Module D0
 ```
 
 ## 💡 Important Notes / Gotchas
@@ -124,11 +118,12 @@ ESP32 GPIO34 ──────────── Soil Moisture AOUT
 - Pins GPIO34 and GPIO35 are input-only and lack internal pull resistors, making them ideal for analog data.
 - ADC1 channels handle GPIO34 and GPIO35 because ADC2 stops working when WiFi is active.
 - Digital communication for DHT11 happens on GPIO4 without interfering with WiFi.
-- Capacitive soil sensors require 3.3V power since higher voltages break the ESP32 input.
+- Soil moisture sensors require 3.3V power since higher voltages break the ESP32 input.
 - Readings from the DHT11 should only happen once per second to avoid errors.
 - The 12-bit ADC provides a range from 0 to 4095.
-- Higher ADC values signify drier soil for the capacitive sensor.
-- Bright light makes the LDR voltage divider output a lower value.
+- Higher ADC values signify drier soil.
+- The LDR module outputs a digital signal: LOW when bright, HIGH when dark (typical LM393 polarity). The firmware converts this to 100 (bright) or 0 (dark).
+- The soil moisture sensor's D0 pin provides a digital threshold output (not used by firmware). The V0 pin provides analog readings used for precise moisture percentage.
 
 ## 🚀 Firmware Setup
 
@@ -150,12 +145,12 @@ ESP32 GPIO34 ──────────── Soil Moisture AOUT
 ## 📏 Sensor Calibration
 
 - **Soil moisture**: Note the ADC values when the sensor is in water (wet) and air (dry). You can then tweak the mapping in your firmware code.
-- **LDR**: Calculations using the 500 / R_ldr formula are just estimates. Use a real light meter if precision matters.
+- **LDR Module**: Adjust the onboard potentiometer to set the desired light/dark switching threshold. The firmware reads this as a simple digital signal (0=dark, 100=bright).
 - **DHT11**: Expect occasional read failures. The code skips these automatically using a NaN check.
 
 ## 🆘 Troubleshooting
 
-- **DHT failures**: Verify your wiring and check for the pull-up resistor. Ensure you aren't reading the sensor too often.
+- **DHT failures**: Verify your wiring connections. The 3-pin module has a built-in pull-up — no external resistor needed. Ensure you aren't reading the sensor too often.
 - **WiFi issues**: Confirm your credentials and make sure you're using 2.4GHz WiFi.
 - **Server errors**: Check the `BACKEND_URL`. Confirm the backend app is active.
 - **Jumpy readings**: Try adding a 100nF capacitor between the sensor signal and GND.

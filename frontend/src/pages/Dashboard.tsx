@@ -72,7 +72,7 @@ export default function Dashboard() {
   const getMoistureStatus = (v: number) => v < 20 || v > 80 ? 'critical' : v < 30 || v > 70 ? 'warning' : 'healthy';
   const getTempStatus = (v: number) => v < 15 || v > 32 ? 'critical' : v < 18 || v > 28 ? 'warning' : 'healthy';
   const getHumidityStatus = (v: number) => v < 30 || v > 80 ? 'critical' : v < 40 || v > 70 ? 'warning' : 'healthy';
-  const getLightStatus = (v: number) => v < 100 || v > 8000 ? 'critical' : v < 200 || v > 5000 ? 'warning' : 'healthy';
+  const getLightStatus = (v: number) => v < 50 ? 'critical' : 'healthy';
 
   const hasNoData = !isLoading && !error && activeReadings.length === 0;
 
@@ -231,7 +231,7 @@ export default function Dashboard() {
                     <SensorCard
                       label="Light Level"
                       value={activeLatest.light}
-                      unit="lux"
+                      unit="%"
                       icon={Sun}
                       status={getLightStatus(activeLatest.light)}
                       testId="sensor-card-light"
