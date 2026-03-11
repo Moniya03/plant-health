@@ -1,8 +1,6 @@
 services:
   backend:
-    build:
-      context: ../backend
-      dockerfile: Dockerfile
+    image: ghcr.io/moniya03/plant-health/backend:latest
     ports:
       - "8000:8000"
     volumes:
