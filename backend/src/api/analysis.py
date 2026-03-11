@@ -3,6 +3,7 @@
 from fastapi import APIRouter, HTTPException
 
 from src.agents.flow import create_analysis_flow
+from src.sse import broadcaster
 from src.config import (
     HUMIDITY_HIGH,
     HUMIDITY_LOW,
@@ -97,7 +98,12 @@ async def trigger_analysis() -> dict[str, object]:
         model_used=model_used if isinstance(model_used, str) else None,
     )
 
-    # SSE broadcast will be added in Task 10.
+    await broadcaster.broadcast("analysis", {
+        "id": analysis_id,
+        "health_score": health_score,
+        "status": status if isinstance(status, str) else "unknown",
+        "analysis_type": analysis_type if isinstance(analysis_type, str) else "rule_based",
+    })
     return {**final, "id": analysis_id}
 
 

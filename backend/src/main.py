@@ -10,6 +10,7 @@ from src.api.analysis import router as analysis_router
 from src.api.sensors import router as sensors_router
 from src.api.plant import router as plant_router
 from src.api.health import router as health_router
+from src.api.stream import router as stream_router
 
 app = FastAPI(
     title="Plant Health Monitor",
@@ -31,6 +32,7 @@ app.include_router(sensors_router)
 app.include_router(plant_router)
 app.include_router(health_router)
 app.include_router(analysis_router)
+app.include_router(stream_router)
 
 
 @app.on_event("startup")

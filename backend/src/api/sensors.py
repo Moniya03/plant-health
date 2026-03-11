@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException
 
 from src.db import insert_reading, get_readings, get_latest_reading
 from src.models import SensorReading, SensorReadingResponse
+from src.sse import broadcaster
 
 router = APIRouter(prefix="/api/sensor-data", tags=["sensors"])
 
@@ -17,7 +18,13 @@ async def ingest_sensor_data(reading: SensorReading):
         humidity=reading.humidity,
         light=reading.light,
     )
-    # SSE broadcast placeholder — implemented in Task 10
+    await broadcaster.broadcast("sensor_data", {
+        "id": reading_id,
+        "soil_moisture": reading.soil_moisture,
+        "temperature": reading.temperature,
+        "humidity": reading.humidity,
+        "light": reading.light,
+    })
     return SensorReadingResponse(status="ok", id=reading_id)
 
 
