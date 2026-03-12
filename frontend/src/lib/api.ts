@@ -2,7 +2,7 @@ import axios from 'axios';
 import type { SensorReading } from '@/hooks/useSensorData';
 import type { AnalysisResult } from '@/hooks/useSSE';
 
-const BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+const BASE_URL = import.meta.env.VITE_BACKEND_URL ?? 'http://localhost:8000';
 
 const client = axios.create({
   baseURL: BASE_URL,

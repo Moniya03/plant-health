@@ -29,7 +29,7 @@ export default function Dashboard() {
   const [activeLatest, setActiveLatest] = useState(latest);
   const [activeReadings, setActiveReadings] = useState(readings);
 
-  const BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+  const BASE_URL = import.meta.env.VITE_BACKEND_URL ?? 'http://localhost:8000';
   const { lastSensorData, lastAnalysis, connectionStatus } = useSSE(`${BASE_URL}/api/stream`);
 
   const [currentAnalysis, setCurrentAnalysis] = useState<AnalysisResult | null>(null);
